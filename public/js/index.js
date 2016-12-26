@@ -1,51 +1,30 @@
-// module aliases
-const Engine = Matter.Engine,
-    Render = Matter.Render,
-    World = Matter.World,
-    Bodies = Matter.Bodies,
+const M = Matter,
 
-    // create an engine
-    engine = Engine.create(),
-
-    // create a renderer
-    render = Render.create({
+    engine = M.Engine.create(),
+    render = M.Render.create({
         element : document.body,
         engine
     }),
 
     bodies = [],
 
-    rate = 0,
+    RATE = 0,
+    MAX  = 250;
 
-    max = 250;
-
-let now, last;
+let idx = 0,
+    now, last;
 
 engine.world.gravity.y = -1;
 
-// // create two boxes and a ground
-// var boxA = Bodies.rectangle(400, 200, 80, 80);
-// var boxB = Bodies.rectangle(450, 50, 80, 80);
-// var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
+const s0 = M.Bodies.rectangle(400, 610, 810,  60, { isStatic : true }),
+    s1   = M.Bodies.rectangle(100, 330, 20,  500, { isStatic : true }),
+    s2   = M.Bodies.rectangle(700, 330, 20,  500, { isStatic : true }),
+    s3   = M.Bodies.rectangle(400, 330, 200, 500, { isStatic : true }),
+    base = M.Bodies.circle(400, 380, 150, { isStatic : true, friction : 0.1 });
 
-// // add all of the bodies to the world
-// World.add(engine.world, [boxA, boxB, ground]);
-
-// add background
-let idx = 0;
-
-const s0 = Bodies.rectangle(400, 610, 810, 60, { isStatic : true }),
-    s1   = Bodies.rectangle(100, 330, 20, 500, { isStatic : true }),
-    s2   = Bodies.rectangle(700, 330, 20, 500, { isStatic : true }),
-    s3   = Bodies.rectangle(400, 330, 200, 500, { isStatic : true });
-
-World.add(engine.world, [ s0, s1, s2 ]);
-
-// run the engine
-Engine.run(engine);
-
-// run the renderer
-Render.run(render);
+M.World.add(engine.world, [ s0, s1, s2, base ]);
+M.Engine.run(engine);
+M.Render.run(render);
 
 function getRand(min, max) {
     return Math.random() * (max - min) + min;
@@ -56,7 +35,7 @@ function raf() {
 
     now = Date.now();
 
-    if(!last || now - last > rate) {
+    if(!last || now - last > RATE) {
         let num = getRand(2, 6);
 
         last = now;
@@ -67,13 +46,19 @@ function raf() {
                 r = getRand(1, 20);
 
             if(bodies[idx]) {
-                World.remove(engine.world, bodies[idx]);
+                M.World.remove(engine.world, bodies[idx]);
             }
 
-            bodies[idx] = Bodies.circle(x, y, r);
-            World.add(engine.world, [ bodies[idx] ]);
+            bodies[idx] = M.Bodies.circle(x, y, r, {
+                collisionFilter : {
+                    group : -1
+                },
+                friction : 0.1
+                // force : { x : 10, y : 2 }
+            });
+            M.World.add(engine.world, [ bodies[idx] ]);
 
-            idx = idx === max ? 0 : idx + 1;
+            idx = idx === MAX ? 0 : idx + 1;
         }
     }
 }
